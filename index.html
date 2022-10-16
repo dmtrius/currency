@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Currency exchange</title>
+    <link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAAfegAAQf8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEREQARABERERERABEAEREREAAAAAAAEREQAAAAAAABERERABEAEAEREREAEQAQAREREQARABABEREAAAAAAAEREAAAAAAAEREQAQARABERERABABEAEREREAEAEQAREREQAAAAAAABEREAAAAAAAEREREAEQAREREREQARABEREAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" rel="icon" type="image/x-icon" />
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <style type="text/css">
+        #content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-right: -50%;
+            transform: translate(-50%, -50%);
+        }
+        table, td {
+            border: 1px solid #000;
+            border-collapse: collapse;
+            padding: 10px 30px;
+        }
+        td.th {
+            font-weight: bold;
+        }
+        .date {
+            font-size: 14px;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: steelblue;
+            font-family: monospace;
+        }
+        .date a {
+            float: right;
+            text-decoration: underline;
+        }
+        #clock {
+            margin: 0;
+        }
+    </style>
+    <script type="application/javascript">
+        /*
+            [
+                {
+                "ccy": "USD",
+                "base_ccy": "UAH",
+                "buy": "28.05000",
+                "sale": "28.45000"
+                },
+                {
+                "ccy": "EUR",
+                "base_ccy": "UAH",
+                "buy": "33.10000",
+                "sale": "33.70000"
+                },
+                {
+                "ccy": "RUR",
+                "base_ccy": "UAH",
+                "buy": "0.35300",
+                "sale": "0.39300"
+                },
+                {
+                "ccy": "BTC",
+                "base_ccy": "USD",
+                "buy": "14672.9324",
+                "sale": "16217.4516"
+                }
+            ]
+        */
+        setInterval(function() {
+            myTimer();
+        }, 1000);
+        update();
+        setInterval(update, 60 * 60 * 1000);
+        function update() {
+            fetch('https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5')
+                .then(
+                    function (response) {
+                        if (response.status !== 200) {
+                            console.log('Looks like there was a problem. Status Code: ' +
+                                response.status);
+                            return;
+                        }
+                        response.json().then(function (data) {
+                            //console.log(data);
+                            let d = new Date();
+                            let datestring = ("0" + d.getDate()).slice(-2) + "-" + ("0"+(d.getMonth()+1)).slice(-2) + "-" +
+                                d.getFullYear() + " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+                            $("#header").html(`<p class="date">${datestring} <a onclick="reload()" href="#">refresh</a></p>`);
+                            $("#tableContainer").html("");
+                            let container = document.getElementById("tableContainer");
+                            let tbl = document.createElement("table");
+                            tbl.classList.add("table-striped");
+                            let tblBody = document.createElement("tbody");
+                            for (let j = 0; j <= 2; j++) {
+                                let row = document.createElement("tr");
+                                for (let i = 0; i < 1; i++) {
+                                    let cellH = document.createElement("td");
+                                    let cellTextH = document.createTextNode(data[j].ccy + " → " + data[j].base_ccy);
+                                    cellH.className = "th";
+                                    cellH.appendChild(cellTextH);
+                                    row.appendChild(cellH);
+                                    let cell = document.createElement("td");
+                                    let cellText = document.createTextNode(Number(data[j].buy).toFixed(2) + " ↹ " + Number(data[j].sale).toFixed(2));
+                                    cell.appendChild(cellText);
+                                    row.appendChild(cell);
+                                }
+                                tblBody.appendChild(row);
+                            }
+                            tbl.appendChild(tblBody);
+                            container.appendChild(tbl);
+                        });
+                    }
+                )
+                .catch(function (err) {
+                    console.log('Fetch Error :-S', err);
+                });
+        }
+        function reload() {
+            window.location.reload();
+        }
+        function myTimer() {
+            let d = new Date();
+            $("#clock").html(d.toLocaleTimeString());
+        }
+    </script>
+</head>
+<body>
+<div id="content">
+    <div id="clock" class="date"></div>
+    <div id="header"></div>
+    <div id="tableContainer"></div>
+</div>
+</body>
+</html>
